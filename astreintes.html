@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contrôle Repos Astreintes WE</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Supprime le délai 300ms et le flash bleu au toucher sur Android */
+    a, button, input, select, label { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      padding: 28px;
+      max-width: 1100px;
+      margin: 0 auto;
+      overscroll-behavior-y: contain;
+    }
+
+    /* ── En-tête ── */
+    .page-header {
+      background: #1a3a5c;
+      color: white;
+      border-radius: 12px;
+      padding: 22px 26px;
+      margin-bottom: 20px;
+    }
+
+    .page-header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+    }
+
+    /* Switch équipe */
+    .team-switch {
+      display: flex;
+      gap: 0;
+      background: rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 4px;
+      width: fit-content;
+      margin-bottom: 18px;
+    }
+
+    .team-btn {
+      padding: 8px 22px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-weight: 600;
+      background: transparent;
+      color: rgba(255,255,255,0.65);
+      transition: all 0.18s;
+    }
+
+    .team-btn.active {
+      background: white;
+      color: #1a3a5c;
+    }
+
+    .team-btn:not(.active):hover {
+      color: white;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .exploitation-msg {
+      display: none;
+      background: #fff3cd;
+      border: 2px solid #e6a817;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #7a4f00;
+      font-weight: 600;
+      font-size: 0.92rem;
+      margin-top: 12px;
+    }
+
+    .exploitation-msg::before { content: "🧠 "; }
+
+    /* Règles affichées dans l'en-tête */
+    .rules-box {
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 0.84rem;
+      line-height: 1.65;
+    }
+
+    .rules-box .rules-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: #b8d4f5;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .rules-box ul {
+      padding-left: 18px;
+      color: rgba(255,255,255,0.88);
+    }
+
+    .rules-box ul li { margin-bottom: 5px; }
+
+    .rules-box .borne-tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a3a5c;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e0e7ef;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Sélection WE ── */
+    .we-selector {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .we-selector label {
+      font-weight: 600;
+      font-size: 0.92rem;
+      white-space: nowrap;
+    }
+
+    .we-selector input[type="date"] {
+      padding: 10px 14px;
+      border: 1px solid #ccd5e0;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      min-width: 180px;
+    }
+
+    .we-info {
+      background: #e8f0fa;
+      border-left: 4px solid #2c6db5;
+      padding: 10px 16px;
+      border-radius: 0 7px 7px 0;
+      font-size: 0.9rem;
+      color: #1a3a5c;
+      font-weight: 600;
+    }
+
+    /* ── Tableau astreintes ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    thead tr { background: #e8f0fa; }
+
+    th {
+      padding: 11px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: #1a3a5c;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #eef0f3;
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f7f9fc; }
+
+    td:first-child {
+      font-weight: 700;
+      color: #888;
+      width: 36px;
+      text-align: center;
+    }
+
+    input[type="datetime-local"] {
+      padding: 9px 12px;
+      border: 1px solid #ccd5e0;
+      border-radius: 7px;
+      font-size: 0.92rem;
+      width: 220px;
+      background: #fafbfd;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="datetime-local"]:focus {
+      outline: none;
+      border-color: #2c6db5;
+      box-shadow: 0 0 0 3px rgba(44,109,181,0.15);
+      background: white;
+    }
+
+    .input-error {
+      border-color: #d9363e !important;
+      background: #fff5f5 !important;
+    }
+
+    .warn-inline {
+      color: #d9363e;
+      font-size: 0.78rem;
+      margin-top: 4px;
+    }
+
+    td.dur-cell {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #555;
+      min-width: 80px;
+    }
+
+    /* ── Boutons ── */
+    .btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 700;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-add   { background: #2c6db5; color: white; }
+    .btn-add:hover   { background: #1a4f8a; }
+    .btn-del   { background: #f0f2f5; color: #555; padding: 7px 12px; font-size: 0.85rem; }
+    .btn-del:hover   { background: #d9dce0; }
+    .btn-check { background: #1a7a4a; color: white; padding: 10px 24px; font-size: 0.92rem; }
+    .btn-check:hover { background: #135c37; }
+    .btn-ods   { background: #5b3fa0; color: white; padding: 10px 20px; font-size: 0.92rem; }
+    .btn-ods:hover   { background: #3f2a72; }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #eef0f3;
+    }
+
+    /* ── Résultats ── */
+    .repos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .repos-item {
+      border: 1px solid #d0d8e4;
+      border-radius: 9px;
+      padding: 14px 16px;
+      font-size: 0.88rem;
+      background: #f9fbfd;
+    }
+
+    .repos-item .label {
+      font-weight: 700;
+      color: #1a3a5c;
+      margin-bottom: 5px;
+      font-size: 0.85rem;
+    }
+
+    .repos-item .plage {
+      font-size: 0.78rem;
+      color: #777;
+      margin-bottom: 8px;
+    }
+
+    .repos-item .duration {
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .ok  { color: #1a7a4a; }
+    .nok { color: #d9363e; }
+
+    /* ── Bloc alerte global ── */
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #d9363e;
+      color: white;
+      border-radius: 9px 9px 0 0;
+      padding: 12px 18px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 10px;
+    }
+
+    .alert-header::before { content: "⚠ "; font-size: 1.1rem; }
+
+    /* ── Carte de décision individuelle ── */
+    .alert-decision {
+      border: 2px solid #d9363e;
+      border-top: none;
+      border-radius: 0 0 9px 9px;
+      background: #fff0f0;
+      padding: 0;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .alert-decision + .alert-header {
+      border-radius: 9px 9px 0 0;
+    }
+
+    .alert-decision-body {
+      padding: 16px 20px 14px;
+    }
+
+    .alert-decision-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #a02020;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .alert-decision-action {
+      font-size: 0.95rem;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .alert-decision-time {
+      display: inline-block;
+      background: #d9363e;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 900;
+      padding: 8px 20px;
+      border-radius: 7px;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+    }
+
+    .alert-decision-sub {
+      font-size: 0.78rem;
+      color: #a02020;
+      margin-top: 8px;
+    }
+
+    .ok-block {
+      background: #f0faf4;
+      border: 2px solid #1a7a4a;
+      border-radius: 9px;
+      padding: 14px 18px;
+      color: #1a7a4a;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-top: 10px;
+    }
+
+    .ok-block::before { content: "✓  "; }
+
+    .manager-block {
+      background: #1a3a5c;
+      color: white;
+      border-radius: 9px;
+      padding: 14px 20px;
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .manager-block .manager-icon {
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .manager-block .manager-text {
+      line-height: 1.45;
+    }
+
+    .manager-block .manager-text span {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 400;
+      opacity: 0.75;
+      margin-top: 2px;
+    }
+
+    #no-we { color: #999; font-style: italic; font-size: 0.9rem; }
+
+    /* ── Popup démarrage ── */
+    .startup-overlay {
+      display: none;
+      position: fixed;
+      top: 0; right: 0; bottom: 0; left: 0;
+      background: rgba(10,20,40,0.88); /* fond solide si backdrop-filter non supporté */
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+    .startup-overlay.open { display: flex; }
+
+    .startup-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px 32px;
+      width: 480px;
+      max-width: 95vw;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+    }
+
+    .startup-card .startup-icon {
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+    }
+
+    .startup-card h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a3a5c;
+      margin-bottom: 14px;
+    }
+
+    .startup-card p {
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #444;
+      margin-bottom: 10px;
+    }
+
+    .startup-card ul {
+      margin: 8px 0 12px 18px;
+      font-size: 0.86rem;
+      color: #333;
+      line-height: 1.7;
+    }
+
+    .startup-warn {
+      background: #fff3cd;
+      border-left: 4px solid #e6a817;
+      border-radius: 0 6px 6px 0;
+      padding: 10px 14px;
+      color: #7a4f00;
+      font-weight: 600;
+      font-size: 0.87rem !important;
+      margin-bottom: 12px !important;
+    }
+
+    .startup-ok {
+      background: #f0faf4;
+      border-left: 4px solid #1a7a4a;
+      border-radius: 0 6px 6px 0;
+      padding: 10px 14px;
+      color: #1a4a2a;
+      font-weight: 600;
+      font-size: 0.87rem !important;
+      margin-bottom: 12px !important;
+    }
+
+    .startup-card .btn-startup {
+      width: 100%;
+      padding: 11px;
+      background: #1a3a5c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.15s;
+    }
+    .startup-card .btn-startup:hover { background: #2c6db5; }
+
+    #maintenanceApp { display: block; }
+
+    /* ── Responsive mobile ── */
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+
+      .page-header h1 { font-size: 1.05rem; }
+      .rules-box { font-size: 0.78rem; }
+
+      .we-selector { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .we-info { width: 100%; }
+
+      /* Empêche le zoom auto sur iOS lors du focus sur un input */
+      input[type="date"],
+      input[type="datetime-local"] { font-size: 16px; }
+
+      input[type="datetime-local"] { width: 100%; min-width: 0; }
+
+      /* Table scrollable horizontalement */
+      #astrTable { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+      td.dur-cell { min-width: 55px; font-size: 0.88rem; }
+
+      .actions { flex-direction: column; gap: 8px; }
+      .btn      { width: 100%; text-align: center; }
+      .btn-del  { width: auto; }
+
+      .repos-grid { grid-template-columns: 1fr; }
+
+      .alert-decision-time { font-size: 1.1rem; }
+
+      .startup-card { padding: 22px 18px; }
+
+      /* Cibles tactiles minimum 44px (recommandation Google / Apple) */
+      .btn       { min-height: 44px; }
+      .team-btn  { min-height: 40px; }
+      .btn-del   { min-height: 40px; min-width: 40px; }
+      .btn-startup { min-height: 48px; font-size: 1rem; }
+    }
+
+    /* ── Nouvelle ligne en attente de saisie ── */
+    tr.row-new td {
+      background: #fffbe6;
+    }
+    tr.row-new td input[type="datetime-local"] {
+      border-color: #f0a500;
+      background: #fffff5;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════ EN-TÊTE ════════════ -->
+<div class="page-header">
+  <h1>Contrôle des repos — Astreintes Week-End</h1>
+
+  <!-- Switch équipe -->
+  <div class="team-switch">
+    <button class="team-btn active" id="btnMaint" onclick="selectTeam('maintenance')">Maintenance</button>
+    <button class="team-btn"        id="btnExpl"  onclick="selectTeam('exploitation')">Exploitation</button>
+  </div>
+
+  <!-- Message exploitation indisponible -->
+  <div class="exploitation-msg" id="explMsg">
+    Module Exploitation en cours de développement — indisponible pour le moment.
+  </div>
+
+  <!-- Règles succinctes -->
+  <div class="rules-box" id="rulesBox">
+    <div class="rules-title">Règles applicables — Équipe Maintenance</div>
+    <ul>
+      <li>
+        Bornes du week-end maintenance :
+        <span class="borne-tag">Vendredi 16h00</span> → <span class="borne-tag">Lundi 07h30</span>
+      </li>
+      <li>
+        <strong>Règle des 9h :</strong> au moins <strong>9h de repos consécutifs</strong> doivent être respectées
+        <em>autour de la 1ère sortie</em> (avant ou après) <strong>ET</strong> <em>autour de la dernière sortie</em> (après ou avant).
+      </li>
+      <li>
+        Concrètement : un bloc de 9h libre doit exister <strong>en début de WE</strong> (avant la 1ère sortie)
+        <em>ou</em> <strong>juste après</strong> la 1ère sortie — <strong>et</strong> un bloc de 9h libre doit exister
+        <strong>en fin de WE</strong> (après la dernière sortie) <em>ou</em> avant la 1ère sortie.
+      </li>
+      <li>
+        Si non respecté : la prochaine sortie ou la reprise lundi sont automatiquement décalées
+        (<em>fin de sortie concernée + 9h</em>).
+      </li>
+      <li style="margin-top:8px">
+        <strong>Règle des 24h :</strong> au moins <strong>24h consécutives de repos</strong> doivent figurer sur l'ensemble du week-end
+        (<span class="borne-tag">Vendredi 16h00</span> → <span class="borne-tag">Lundi 07h30</span>).
+      </li>
+      <li>
+        Si non respecté : reprise du poste lundi décalée à <em>fin de la dernière sortie + 24h</em>.
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════════════ APP MAINTENANCE ════════════ -->
+<div id="maintenanceApp">
+
+  <!-- Sélection du week-end -->
+  <div class="card">
+    <h2>Sélection du week-end</h2>
+    <div class="we-selector">
+      <label for="pickDate">Choisir une date dans le week-end :</label>
+      <input type="date" id="pickDate" onchange="onDateChange()" oninput="onDateChange()">
+      <div class="we-info" id="weInfo">— Aucun week-end sélectionné —</div>
+    </div>
+  </div>
+
+  <!-- Saisie des sorties -->
+  <div class="card" id="saisieCard">
+    <h2>Saisie des sorties d'astreinte</h2>
+    <div id="no-we">Sélectionnez d'abord un week-end ci-dessus.</div>
+    <table id="astrTable" style="display:none">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Début de sortie</th>
+          <th>Fin de sortie</th>
+          <th>Durée</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="astrBody"></tbody>
+    </table>
+    <div class="actions" id="astrActions" style="display:none">
+      <button class="btn btn-add"   onclick="addRow()">+ Ajouter une sortie</button>
+      <button class="btn btn-check" onclick="checkRegles()">Vérifier les repos</button>
+      <button class="btn btn-ods"   onclick="exportODS()">⬇ Export ODS</button>
+    </div>
+  </div>
+
+  <!-- Résultats -->
+  <div class="card" id="resultCard" style="display:none">
+    <h2>Résultat de la vérification</h2>
+    <div id="resultContent"></div>
+  </div>
+
+</div><!-- /maintenanceApp -->
+
+<!-- ════════════ POPUP DÉMARRAGE ════════════ -->
+<div class="startup-overlay" id="startupOverlay">
+  <div class="startup-card">
+    <div class="startup-icon" id="startupIcon"></div>
+    <h3 id="startupTitle"></h3>
+    <div id="startupBody"></div>
+    <button class="btn-startup" onclick="closeStartupModal()">J'ai compris — Continuer</button>
+  </div>
+</div>
+
+<script>
+  // ── Constantes Maintenance ──
+  const REST_MIN_H = 9;
+  const WE_START_H = 16, WE_START_M = 0;
+  const WE_END_H   = 7,  WE_END_M   = 30;
+
+  let weBorne = null;
+  let rowCount = 0;
+
+  // ── Utilitaires ──
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function fmtDt(d) {
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}h${pad(d.getMinutes())}`;
+  }
+
+  function fmtDur(ms) {
+    const tot = Math.round(ms / 60000);
+    const h = Math.floor(tot / 60);
+    const m = tot % 60;
+    return `${h}h${pad(m)}`;
+  }
+
+  function dtLocalStr(d) {
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  // Parsing sûr pour iOS/Android : new Date('YYYY-MM-DDTHH:MM') peut être UTC sur mobile
+  function parseDT(str) {
+    if (!str) return null;
+    const [datePart, timePart = '00:00'] = str.split('T');
+    const [y, mo, d] = datePart.split('-').map(Number);
+    const [h, mi]    = (timePart).split(':').map(Number);
+    return new Date(y, mo - 1, d, h, mi, 0, 0);
+  }
+
+  // Calcule vendredi 16h → lundi 7h30 encadrant la date donnée
+  function getWeBornes(d) {
+    const dt = new Date(d);
+    dt.setHours(0, 0, 0, 0);
+    const dow = dt.getDay(); // 0=dim … 5=ven … 6=sam
+
+    let fri = new Date(dt);
+    const daysToFri = (dow >= 5) ? (dow - 5) : (dow + 2);
+    fri.setDate(fri.getDate() - daysToFri);
+    fri.setHours(WE_START_H, WE_START_M, 0, 0);
+
+    let mon = new Date(fri);
+    mon.setDate(mon.getDate() + 3);
+    mon.setHours(WE_END_H, WE_END_M, 0, 0);
+
+    return { debut: fri, fin: mon };
+  }
+
+  function inWE(d) {
+    return d >= weBorne.debut && d <= weBorne.fin;
+  }
+
+  // ── Pré-saisie : prochain vendredi ──
+  (function preselectDate() {
+    const today = new Date();
+    const dow = today.getDay();
+    const daysUntilFri = (5 - dow + 7) % 7 || 7;
+    const fri = new Date(today);
+    fri.setDate(today.getDate() + daysUntilFri);
+    const val = `${fri.getFullYear()}-${pad(fri.getMonth()+1)}-${pad(fri.getDate())}`;
+    document.getElementById('pickDate').value = val;
+  })();
+
+  // ── Switch équipe ──
+  function selectTeam(team) {
+    const isMaint = team === 'maintenance';
+    document.getElementById('btnMaint').classList.toggle('active', isMaint);
+    document.getElementById('btnExpl').classList.toggle('active', !isMaint);
+    document.getElementById('explMsg').style.display        = isMaint ? 'none'  : 'block';
+    document.getElementById('maintenanceApp').style.display = isMaint ? 'block' : 'none';
+    document.getElementById('rulesBox').style.display       = isMaint ? 'block' : 'none';
+  }
+
+  // ── Sélection du WE ──
+  function onDateChange() {
+    const v = document.getElementById('pickDate').value;
+    if (!v) return;
+
+    const [yy, mm, dd] = v.split('-').map(Number);
+    const chosen = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    weBorne = getWeBornes(chosen);
+
+    document.getElementById('weInfo').textContent =
+      `WE sélectionné : vendredi ${fmtDt(weBorne.debut)} → lundi ${fmtDt(weBorne.fin)}`;
+
+    document.getElementById('astrBody').innerHTML = '';
+    rowCount = 0;
+    document.getElementById('no-we').style.display     = 'none';
+    document.getElementById('astrTable').style.display = '';
+    document.getElementById('astrActions').style.display = 'flex';
+    document.getElementById('resultCard').style.display  = 'none';
+
+    addRow();
+  }
+
+  // ── Lignes de saisie ──
+  function addRow() {
+    rowCount++;
+    const id = rowCount;
+    const tr = document.createElement('tr');
+    tr.id = `row-${id}`;
+    tr.className = 'row-new';
+
+    const minStr = dtLocalStr(weBorne.debut);
+    const maxStr = dtLocalStr(weBorne.fin);
+
+    tr.innerHTML = `
+      <td>${id}</td>
+      <td>
+        <input type="datetime-local" id="deb-${id}"
+          min="${minStr}" max="${maxStr}"
+          onchange="onInputChange(${id})" oninput="onInputChange(${id})">
+        <div class="warn-inline" id="warn-deb-${id}"></div>
+      </td>
+      <td>
+        <input type="datetime-local" id="fin-${id}"
+          min="${minStr}" max="${maxStr}"
+          onchange="onInputChange(${id})" oninput="onInputChange(${id})">
+        <div class="warn-inline" id="warn-fin-${id}"></div>
+      </td>
+      <td class="dur-cell" id="dur-${id}">—</td>
+      <td><button class="btn btn-del" onclick="delRow(${id})">✕</button></td>
+    `;
+    document.getElementById('astrBody').appendChild(tr);
+  }
+
+  function delRow(id) {
+    const tr = document.getElementById(`row-${id}`);
+    if (tr) tr.remove();
+    document.getElementById('resultCard').style.display = 'none';
+  }
+
+  function onInputChange(id) {
+    const debEl = document.getElementById(`deb-${id}`);
+    const finEl = document.getElementById(`fin-${id}`);
+    const wDeb  = document.getElementById(`warn-deb-${id}`);
+    const wFin  = document.getElementById(`warn-fin-${id}`);
+    const durEl = document.getElementById(`dur-${id}`);
+
+    const rowEl = document.getElementById('row-' + id);
+    if (rowEl) rowEl.classList.remove('row-new');
+
+    wDeb.textContent = '';
+    wFin.textContent = '';
+    debEl.classList.remove('input-error');
+    finEl.classList.remove('input-error');
+
+    if (!debEl.value || !finEl.value) { durEl.textContent = '—'; return; }
+
+    const deb = parseDT(debEl.value);
+    const fin = parseDT(finEl.value);
+    let ok = true;
+
+    if (!inWE(deb)) {
+      wDeb.textContent = `Hors du WE (${fmtDt(weBorne.debut)} → ${fmtDt(weBorne.fin)})`;
+      debEl.classList.add('input-error'); ok = false;
+    }
+    if (!inWE(fin)) {
+      wFin.textContent = `Hors du WE (${fmtDt(weBorne.debut)} → ${fmtDt(weBorne.fin)})`;
+      finEl.classList.add('input-error'); ok = false;
+    }
+    if (ok && fin <= deb) {
+      wFin.textContent = 'La fin doit être après le début.';
+      finEl.classList.add('input-error'); ok = false;
+    }
+
+    if (ok) {
+      const allRows = document.querySelectorAll('#astrBody tr');
+      for (const tr of allRows) {
+        const otherId = tr.id.replace('row-', '');
+        if (otherId === String(id)) continue;
+        const oDebEl = document.getElementById('deb-' + otherId);
+        const oFinEl = document.getElementById('fin-' + otherId);
+        const oDeb = oDebEl ? oDebEl.value : '';
+        const oFin = oFinEl ? oFinEl.value : '';
+        if (!oDeb || !oFin) continue;
+        const od = parseDT(oDeb), of_ = parseDT(oFin);
+        if (deb < of_ && fin > od) {
+          const numLabelEl = document.querySelector('#row-' + otherId + ' td:first-child');
+          const numLabel = numLabelEl ? numLabelEl.textContent : otherId;
+          wDeb.textContent = `Chevauchement avec la sortie n°${numLabel}`;
+          debEl.classList.add('input-error');
+          finEl.classList.add('input-error');
+          ok = false;
+          break;
+        }
+      }
+    }
+
+    durEl.textContent = ok ? fmtDur(fin - deb) : '—';
+  }
+
+  // ── Vérification des règles ──
+  function checkRegles() {
+    const rows    = document.querySelectorAll('#astrBody tr');
+    const sorties = [];
+
+    for (const tr of rows) {
+      const id    = tr.id.replace('row-', '');
+      const debEl = document.getElementById('deb-' + id);
+      const finEl = document.getElementById('fin-' + id);
+      if (!debEl || !debEl.value || !finEl || !finEl.value) continue;
+      const deb = parseDT(debEl.value);
+      const fin = parseDT(finEl.value);
+      if (!deb || !fin || !inWE(deb) || !inWE(fin) || fin <= deb) continue;
+      sorties.push({ deb, fin });
+    }
+
+    sorties.sort((a, b) => a.deb - b.deb);
+
+    const rc        = document.getElementById('resultCard');
+    const rcContent = document.getElementById('resultContent');
+    rc.style.display = '';
+
+    if (sorties.length === 0) {
+      rcContent.innerHTML = '<p style="color:#999;font-style:italic">Aucune sortie valide à analyser.</p>';
+      return;
+    }
+
+    const MIN_MS      = REST_MIN_H * 3600000;
+    const REST_24H_MS = 24 * 3600000;
+    const borneDebut  = weBorne.debut;
+    const borneFin    = weBorne.fin;
+
+    const gap1 = sorties[0].deb - borneDebut;
+    const gapN = borneFin - sorties[sorties.length - 1].fin;
+    const gap2 = sorties.length > 1
+      ? sorties[1].deb - sorties[0].fin
+      : borneFin - sorties[0].fin;
+
+    const ok1 = gap1 >= MIN_MS;
+    const ok2 = gap2 >= MIN_MS;
+    const okN = gapN >= MIN_MS;
+
+    const condA   = ok1 || ok2;
+    const condB   = okN || ok1;
+    const regleOK = condA && condB;
+
+    // Plus long bloc libre du WE (règle 24h)
+    const freeBlocks = [];
+    freeBlocks.push({ s: borneDebut, e: sorties[0].deb });
+    for (let i = 1; i < sorties.length; i++) {
+      freeBlocks.push({ s: sorties[i-1].fin, e: sorties[i].deb });
+    }
+    freeBlocks.push({ s: sorties[sorties.length-1].fin, e: borneFin });
+
+    let maxFreeMs = 0, maxFreeStart = borneDebut, maxFreeEnd = sorties[0].deb;
+    for (const b of freeBlocks) {
+      const dur = b.e - b.s;
+      if (dur > maxFreeMs) { maxFreeMs = dur; maxFreeStart = b.s; maxFreeEnd = b.e; }
+    }
+    const regle24hOK = maxFreeMs >= REST_24H_MS;
+
+    const sortie1LimiteDebut = new Date(sorties[0].fin.getTime() + MIN_MS);
+    const gap1Hint = !ok1 ? fmtDt(sortie1LimiteDebut) : null;
+
+    const derniere  = sorties[sorties.length - 1];
+    const gapNLimite = new Date(derniere.fin.getTime() + MIN_MS);
+    const gapNHint  = !okN ? fmtDt(gapNLimite) : null;
+
+    let html = '<div class="repos-grid">';
+    html += reposItem('Repos avant 1ère sortie',
+      `${fmtDt(borneDebut)} → ${fmtDt(sorties[0].deb)}`, gap1, MIN_MS, gap1Hint);
+
+    if (sorties.length > 1) {
+      html += reposItem('Repos entre 1ère et 2ème sortie',
+        `${fmtDt(sorties[0].fin)} → ${fmtDt(sorties[1].deb)}`, gap2, MIN_MS);
+      html += reposItem('Repos après dernière sortie (→ fin WE)',
+        `${fmtDt(derniere.fin)} → ${fmtDt(borneFin)}`, gapN, MIN_MS, gapNHint, 'Reprise de poste lundi à décaler au');
+    } else {
+      html += reposItem('Repos après la sortie (→ fin WE)',
+        `${fmtDt(sorties[0].fin)} → ${fmtDt(borneFin)}`, gap2, MIN_MS, gapNHint, 'Reprise de poste lundi à décaler au');
+    }
+
+    const reprise24h = new Date(sorties[sorties.length-1].fin.getTime() + REST_24H_MS);
+    const hint24h    = !regle24hOK ? fmtDt(reprise24h) : null;
+    html += reposItem('Règle des 24h — plus long repos consécutif',
+      `${fmtDt(maxFreeStart)} → ${fmtDt(maxFreeEnd)}`, maxFreeMs, REST_24H_MS,
+      hint24h, 'Reprise de poste lundi à décaler au');
+
+    html += '</div>';
+
+    if (!regleOK) {
+      if (!condA) {
+        const limite     = new Date(sorties[0].fin.getTime() + MIN_MS);
+        const finSortie1 = fmtDt(sorties[0].fin);
+        html += `
+          <div class="alert-header">Règle des 9h non respectée — 1ère sortie</div>
+          <div class="alert-decision">
+            <div class="alert-decision-body">
+              <div class="alert-decision-label">Repos insuffisant autour de la 1ère sortie</div>
+              <div class="alert-decision-action">
+                Fin de la 1ère sortie : <strong>${finSortie1}</strong> — repos de 9h requis avant toute nouvelle sortie.
+              </div>
+              <div>Prochaine sortie possible à partir de :</div>
+              <div class="alert-decision-time">${fmtDt(limite)}</div>
+              <div class="alert-decision-sub">= fin de la 1ère sortie (${finSortie1}) + 9h</div>
+            </div>
+          </div>`;
+      }
+      if (!condB) {
+        const finDerniere   = fmtDt(derniere.fin);
+        const repriseLimite = new Date(derniere.fin.getTime() + MIN_MS);
+        html += `
+          <div class="alert-header">Règle des 9h non respectée — reprise lundi</div>
+          <div class="alert-decision">
+            <div class="alert-decision-body">
+              <div class="alert-decision-label">Repos insuffisant avant la reprise de poste</div>
+              <div class="alert-decision-action">
+                Fin de la dernière sortie : <strong>${finDerniere}</strong> — 9h de repos requis avant la reprise lundi.
+              </div>
+              <div>Reprise de poste lundi à décaler à :</div>
+              <div class="alert-decision-time">${fmtDt(repriseLimite)}</div>
+              <div class="alert-decision-sub">= fin de la dernière sortie (${finDerniere}) + 9h</div>
+            </div>
+          </div>`;
+      }
+    }
+
+    if (!regle24hOK) {
+      const finDerniereStr = fmtDt(sorties[sorties.length-1].fin);
+      html += `
+        <div class="alert-header">Règle des 24h non respectée</div>
+        <div class="alert-decision">
+          <div class="alert-decision-body">
+            <div class="alert-decision-label">Aucun bloc de 24h consécutives sans travail sur le WE</div>
+            <div class="alert-decision-action">
+              Plus long repos consécutif : <strong>${fmtDur(maxFreeMs)}</strong> — minimum requis : 24h00.<br>
+              Fin de la dernière sortie : <strong>${finDerniereStr}</strong>.
+            </div>
+            <div>Reprise de poste lundi à décaler à :</div>
+            <div class="alert-decision-time">${fmtDt(reprise24h)}</div>
+            <div class="alert-decision-sub">= fin de la dernière sortie (${finDerniereStr}) + 24h</div>
+          </div>
+        </div>`;
+    }
+
+    // Cas de décalage lundi (règle 9h) : repos après dernière sortie < 9h, compensé par ok1
+    const mondayShiftTime = new Date(derniere.fin.getTime() + MIN_MS);
+
+    if (!regleOK || !regle24hOK) {
+      // ── Violations réelles → bandeau rouge général ──
+      html += `
+        <div class="manager-block">
+          <div class="manager-icon">📢</div>
+          <div class="manager-text">
+            Prévenir un manager
+            <span>Une ou plusieurs règles de repos ne sont pas respectées — informer le responsable avant toute nouvelle intervention ou reprise de poste.</span>
+          </div>
+        </div>`;
+    } else if (!okN) {
+      // ── Règles OK mais repos après dernière sortie < 9h → décalage lundi ──
+      html += `
+        <div class="manager-block">
+          <div class="manager-icon">📢</div>
+          <div class="manager-text">
+            Prévenir un manager — décalage de reprise lundi
+            <span>Règles respectées, mais la reprise de poste lundi doit être décalée à <strong>${fmtDt(mondayShiftTime)}</strong> (fin dernière sortie + 9h) — informer le responsable.</span>
+          </div>
+        </div>`;
+    } else if (!ok1) {
+      // ── Règles OK mais repos avant 1ère sortie < 9h (compensé par repos après) ──
+      html += `
+        <div class="manager-block">
+          <div class="manager-icon">📢</div>
+          <div class="manager-text">
+            Prévenir un manager — repos insuffisant avant la 1ère sortie
+            <span>Repos avant la 1ère sortie : <strong>${fmtDur(gap1)}</strong> (minimum 9h) — règle compensée par le repos après la 1ère sortie. Informer le responsable.</span>
+          </div>
+        </div>`;
+    }
+
+    if (regleOK && regle24hOK) {
+      if (!okN) {
+        html += `<div class="ok-block">Règles des 9h et 24h de repos consécutifs respectées pour ce week-end — si décalage de reprise le lundi (à partir du ${fmtDt(mondayShiftTime)}), prévenir un manager.</div>`;
+      } else if (!ok1) {
+        html += `<div class="ok-block">Règles des 9h et 24h de repos consécutifs respectées pour ce week-end — repos avant la 1ère sortie (${fmtDur(gap1)}) inférieur à 9h, compensé par le repos après. Prévenir un manager.</div>`;
+      } else {
+        html += '<div class="ok-block">Règles des 9h et 24h de repos consécutifs respectées pour ce week-end.</div>';
+      }
+    }
+
+    rcContent.innerHTML = html;
+    sortRowsChronologically();
+  }
+
+  function reposItem(label, plage, ms, minMs, hint, hintLabel) {
+    const h   = Math.floor(ms / 3600000);
+    const m   = Math.round((ms % 3600000) / 60000);
+    const dur = `${h}h${pad(m)}`;
+    const cls = ms >= minMs ? 'ok' : 'nok';
+    const ico = ms >= minMs ? '✓' : '✗';
+    const hintHTML = hint
+      ? `<div style="margin-top:8px;padding:6px 10px;background:#fff3cd;border-left:3px solid #e6a817;border-radius:4px;font-size:0.78rem;color:#7a4f00;">
+           → ${hintLabel || 'Prochaine sortie possible à partir du'} : <strong>${hint}</strong>
+         </div>`
+      : '';
+    return `
+      <div class="repos-item">
+        <div class="label">${label}</div>
+        <div class="plage">${plage}</div>
+        <div class="duration ${cls}">${ico} ${dur}</div>
+        ${hintHTML}
+      </div>`;
+  }
+
+  // ── Tri chronologique des lignes après vérification ──
+  function sortRowsChronologically() {
+    const tbody = document.getElementById('astrBody');
+    const rows  = Array.from(tbody.querySelectorAll('tr'));
+
+    rows.sort((a, b) => {
+      const idA  = a.id.replace('row-', '');
+      const idB  = b.id.replace('row-', '');
+      const elA  = document.getElementById('deb-' + idA);
+      const elB  = document.getElementById('deb-' + idB);
+      const valA = elA ? elA.value : '';
+      const valB = elB ? elB.value : '';
+      return valA.localeCompare(valB);
+    });
+
+    rows.forEach((row, i) => {
+      tbody.appendChild(row);
+      row.cells[0].textContent = i + 1;
+    });
+  }
+
+  // ── Détection bloqueurs au démarrage ──
+  function detectBlockers() {
+    const issues = [];
+
+    // Test cookie
+    try {
+      document.cookie = '__astr_test=1; SameSite=Strict; path=/';
+      const cookieOK = document.cookie.includes('__astr_test');
+      document.cookie = '__astr_test=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+      if (!cookieOK) issues.push('cookie');
+    } catch (e) { issues.push('cookie'); }
+
+    // Test Blob URL (export ODS)
+    try {
+      const b = new Blob([''], { type: 'text/plain' });
+      const u = URL.createObjectURL(b);
+      URL.revokeObjectURL(u);
+    } catch (e) { issues.push('blob'); }
+
+    return issues;
+  }
+
+  function closeStartupModal() {
+    document.getElementById('startupOverlay').classList.remove('open');
+  }
+
+  window.addEventListener('load', function () {
+    const isLocal = location.protocol === 'file:';
+    const issues  = detectBlockers();
+    // Sur file://, les cookies sont normalement bloqués par le navigateur — ce n'est pas un bloqueur tiers
+    const cookieIssue = issues.includes('cookie') && !isLocal;
+    const blobIssue   = issues.includes('blob');
+    const hasIssue    = cookieIssue || blobIssue;
+
+    const icon  = document.getElementById('startupIcon');
+    const title = document.getElementById('startupTitle');
+    const body  = document.getElementById('startupBody');
+
+    if (hasIssue) {
+      icon.textContent  = '⚠️';
+      title.textContent = 'Extension de blocage détectée';
+      let liste = '';
+      if (cookieIssue) liste += '<li>Cookies bloqués — des fonctionnalités peuvent être affectées.</li>';
+      if (blobIssue)   liste += '<li>Téléchargement de fichiers bloqué — l\'export ODS ne fonctionnera pas.</li>';
+      body.innerHTML = `
+        <p class="startup-warn">Une extension de votre navigateur (bloqueur de cookies, de publicités ou de traceurs) interfère avec cette application.</p>
+        <ul>${liste}</ul>
+        <p>Pour un bon fonctionnement, <strong>désactivez cette extension pour cette page</strong> (icône de l'extension → désactiver sur ce site), puis rechargez la page.</p>`;
+    } else {
+      icon.textContent  = '✅';
+      title.textContent = 'Vérification du navigateur';
+      body.innerHTML = `
+        <p class="startup-ok">Aucun bloqueur détecté — bon fonctionnement assuré.</p>
+        <p>Si vous disposez d'une extension de blocage de cookies ou de publicités, pensez à la <strong>désactiver pour cette page</strong> afin de garantir le bon fonctionnement de l'application.</p>`;
+    }
+
+    document.getElementById('startupOverlay').classList.add('open');
+  });
+
+  // ── Export ODS (Flat ODS = XML pur, ouverture directe dans LibreOffice) ──
+  function exportODS() {
+    const rows = document.querySelectorAll('#astrBody tr');
+    const sorties = [];
+
+    for (const tr of rows) {
+      const id    = tr.id.replace('row-', '');
+      const debEl = document.getElementById('deb-' + id);
+      const finEl = document.getElementById('fin-' + id);
+      if (!debEl || !debEl.value || !finEl || !finEl.value) continue;
+      const deb = new Date(debEl.value);
+      const fin = new Date(finEl.value);
+      if (!inWE(deb) || !inWE(fin) || fin <= deb) continue;
+      sorties.push({ deb, fin });
+    }
+
+    if (!sorties.length) { alert('Aucune sortie valide à exporter.'); return; }
+    sorties.sort((a, b) => a.deb - b.deb);
+
+    function esc(v) {
+      return String(v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+    function cell(v) {
+      return `<table:table-cell office:value-type="string"><text:p>${esc(v)}</text:p></table:table-cell>`;
+    }
+    function emptyCell() {
+      return '<table:table-cell/>';
+    }
+
+    let rowsXml = '';
+
+    // Ligne d'info WE
+    rowsXml += `<table:table-row>
+      ${cell('Week-end')}${cell(`${fmtDt(weBorne.debut)} → ${fmtDt(weBorne.fin)}`)}${emptyCell()}${emptyCell()}
+    </table:table-row>`;
+    rowsXml += `<table:table-row>${emptyCell()}</table:table-row>`;
+
+    // En-têtes
+    rowsXml += `<table:table-row>
+      ${cell('#')}${cell('Début de sortie')}${cell('Fin de sortie')}${cell('Durée')}
+    </table:table-row>`;
+
+    // Données
+    sorties.forEach((s, i) => {
+      rowsXml += `<table:table-row>
+        ${cell(i + 1)}${cell(fmtDt(s.deb))}${cell(fmtDt(s.fin))}${cell(fmtDur(s.fin - s.deb))}
+      </table:table-row>`;
+    });
+
+    const fods = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document
+  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  office:mimetype="application/vnd.oasis.opendocument.spreadsheet">
+  <office:body>
+    <office:spreadsheet>
+      <table:table table:name="Astreintes">
+        ${rowsXml}
+      </table:table>
+    </office:spreadsheet>
+  </office:body>
+</office:document>`;
+
+    const blob = new Blob([fods], { type: 'application/vnd.oasis.opendocument.spreadsheet' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    const dateStr = `${weBorne.debut.getFullYear()}${pad(weBorne.debut.getMonth()+1)}${pad(weBorne.debut.getDate())}`;
+    a.download = `astreintes_${dateStr}.fods`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  onDateChange();
+</script>
+</body>
+</html>
