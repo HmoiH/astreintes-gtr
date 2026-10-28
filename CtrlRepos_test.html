@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contrôle des repos (test)</title>
+<style>
+:root{
+  --bg:#f2f4f7; --card:#fff; --tx:#1b2430; --mut:#5d6b7c; --bd:#d6dce4;
+  --ok:#1f8a4c; --warn:#c77700; --ko:#c62828; --info:#456;
+  --okbg:#e2f4e9; --warnbg:#fdf0da; --kobg:#fbe3e3; --infobg:#e8edf3;
+  --shift:#9aa7b6; --free:#e4e9ef; --chip:#1f4e8c;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#10161d; --card:#1a222c; --tx:#e8edf3; --mut:#9aa8b8; --bd:#2c3846;
+    --ok:#3ecf7a; --warn:#f0a13a; --ko:#ff6b6b; --info:#9fb0c3;
+    --okbg:#12301f; --warnbg:#3a2a10; --kobg:#3d1a1a; --infobg:#222c37;
+    --shift:#5b6b7d; --free:#26313d; --chip:#2f6db8;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{max-width:520px;margin:0 auto;padding:12px 12px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+h1{font-size:19px;margin:0}
+h1::after{content:"TEST";font-size:11px;background:var(--ko);color:#fff;border-radius:6px;padding:1px 6px;margin-left:8px;vertical-align:middle}
+.sub{font-size:13px;color:var(--mut)}
+button{font:inherit;color:inherit;cursor:pointer}
+.gear{background:none;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:13px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin:12px 0}
+.card h2{font-size:15px;margin:0 0 8px}
+.card p{margin:6px 0}
+.mut{color:var(--mut);font-size:13px}
+.big{font-size:20px;font-weight:700;margin:4px 0}
+.banner{border-radius:14px;padding:12px 14px;margin:8px 0;border-left:8px solid}
+.banner b{font-size:17px;display:block}
+.banner p{margin:6px 0 0}
+.banner p b{display:inline;font-size:inherit}
+.banner.ok{background:var(--okbg);border-color:var(--ok)}
+.banner.warn{background:var(--warnbg);border-color:var(--warn)}
+.banner.ko{background:var(--kobg);border-color:var(--ko)}
+.banner.info{background:var(--infobg);border-color:var(--info)}
+.note{border-radius:10px;padding:8px 12px;margin:8px 0;font-size:14px;background:var(--warnbg);border:1px solid var(--warn)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.btn{min-height:190px;border-radius:20px;border:0;font-weight:700;font-size:18px;line-height:1.2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px 8px;text-align:center}
+.btn svg{width:64px;height:64px;overflow:visible}
+/* Icônes : aspect alternatif (réveil qui sonne, drapeau penché) au survol ou pendant l'appui, sans animation */
+.al-waves{opacity:0}
+.al-body{transform-origin:32px 36px}
+.fl{transform-origin:11px 60px}
+.btn.dep:active .al-waves{opacity:1}
+.btn.dep:active .al-body{transform:rotate(-6deg)}
+.btn.ret:active .fl{transform:rotate(16deg)}
+@media (hover:hover){
+  .btn.dep:hover .al-waves{opacity:1}
+  .btn.dep:hover .al-body{transform:rotate(-6deg)}
+  .btn.ret:hover .fl{transform:rotate(16deg)}
+}
+.btn small{font-weight:500;font-size:12px;opacity:.85;min-height:15px}
+.btn:active{transform:scale(.97)}
+.dep{background:#f2a516;color:#231500}
+.ret{background:var(--card);color:var(--tx);border:4px solid var(--tx)}
+.navrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.navrow h2{margin:0;flex:1}
+.nav{background:none;border:1px solid var(--bd);border-radius:8px;width:40px;height:36px;font-size:16px}
+.tl{position:relative;height:34px;border-radius:8px;overflow:hidden;background:var(--free);border:1px solid var(--bd)}
+.tl i{position:absolute;top:0;bottom:0}
+.tl .long{background:var(--ok);opacity:.55}
+.tl .free{background:var(--free)}
+.tl .sh{background:var(--shift)}
+.tl .so{background:var(--ko)}
+.tl .now{width:3px;background:var(--tx);z-index:2}
+.ticks{position:relative;height:18px;font-size:11px;color:var(--mut);margin-top:2px}
+.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.ends{display:flex;justify-content:space-between;font-size:11px;color:var(--mut)}
+.leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut);margin-top:8px}
+.leg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;background:var(--c)}
+.wk{margin:8px 0 12px}
+.wk b{font-size:13px}
+.chips{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}
+.chip{min-height:58px;border-radius:10px;border:1px dashed var(--bd);background:none;font-size:11px;line-height:1.2;padding:4px 1px}
+.chip.on{background:var(--chip);color:#fff;border:1px solid var(--chip)}
+.chip span{display:block;font-size:10px;opacity:.9}
+.chip em{display:block;font-style:normal;font-weight:700;font-size:10px;color:#ffd166}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.act{background:var(--chip);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:600}
+.act.ghost{background:none;color:var(--tx);border:1px solid var(--bd)}
+.act.danger{background:var(--ko);color:#fff}
+.it{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--bd);font-size:14px}
+.it:first-of-type{border-top:0}
+.it button{background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:13px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.ov[hidden]{display:none}
+.dlg{background:var(--card);border-radius:16px;padding:16px;max-width:420px;width:100%}
+.dlg h3{margin:0 0 8px;font-size:17px}
+.dlg label{display:block;margin:10px 0;font-size:14px}
+.dlg input[type=datetime-local]{display:block;width:100%;font:inherit;padding:8px;margin-top:4px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)}
+.err{color:var(--ko);font-size:14px;min-height:18px;margin:4px 0}
+.wksel{font:inherit;font-weight:700;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:2px 6px;max-width:100%}
+.choice{display:grid;gap:12px;margin:16px 0}
+.choice .act{padding:22px 14px;font-size:18px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:14px;z-index:20}
+#toast[hidden]{display:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" class="ov" hidden></div>
+<div id="toast" hidden></div>
+<script>
+'use strict';
+
+/* ---------- Paramètres ---------- */
+const H = 3600e3, DAY = 864e5;
+const REGLES = {
+  repos24h: 24 * H,
+  repos9h: 9 * H,
+  // Règle glissante (exploitation) : chaque semaine glissante de 7 jours doit compter 24h de repos consécutifs.
+  // Équivaut à : au plus 5 jours (120h) entre la fin d'un repos ≥24h et le début du suivant (7j - 2×24h).
+  repos24hBudget: 5 * DAY
+};
+// Horaires en minutes depuis minuit (source : Horaires.xlsx)
+const MAINT = {
+  1: [[450, 720], [810, 1008]], 2: [[450, 720], [810, 1008]],
+  3: [[450, 720], [810, 1008]], 4: [[450, 720], [810, 1008]],
+  5: [[450, 720], [765, 963]]
+};
+const QUART = { M: [300, 750], A: [780, 1170] };   // matin 5h00-12h30 / aprèm 13h00-19h30
+const WEEKEND = [360, 810];                        // week-end travaillé 6h00-13h30
+const JOURS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+
+/* ---------- Dates ---------- */
+const pad = n => String(n).padStart(2, '0');
+const midnight = ts => { const d = new Date(ts); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const atMin = (d, m) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, m).getTime();
+const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parseISO = s => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+const mondayOf = d => addDays(d, -((d.getDay() + 6) % 7));
+const fT = ts => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const fD = ts => { const d = new Date(ts); return JOURS[d.getDay()] + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1); };
+const fDT = ts => fD(ts) + ' ' + fT(ts);
+const fDur = ms => { const m = Math.round(ms / 60000); return Math.floor(m / 60) + ' h ' + pad(m % 60); };
+const loc = ts => { const d = new Date(ts); return iso(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+
+/* ---------- Jours fériés (France métropolitaine) ---------- */
+function paques(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
+  const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mois = Math.floor((h + l - 7 * m + 114) / 31), jour = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, mois - 1, jour);
+}
+const jfCache = {};
+function feries(y) {
+  if (jfCache[y]) return jfCache[y];
+  const p = paques(y), o = {};
+  const add = (d, n) => { o[iso(d)] = n; };
+  add(new Date(y, 0, 1), 'Jour de l’an');
+  add(addDays(p, 1), 'Lundi de Pâques');
+  add(new Date(y, 4, 1), 'Fête du Travail');
+  add(new Date(y, 4, 8), 'Victoire 1945');
+  add(addDays(p, 39), 'Ascension');
+  add(addDays(p, 50), 'Lundi de Pentecôte');
+  add(new Date(y, 6, 14), 'Fête nationale');
+  add(new Date(y, 7, 15), 'Assomption');
+  add(new Date(y, 10, 1), 'Toussaint');
+  add(new Date(y, 10, 11), 'Armistice');
+  add(new Date(y, 11, 25), 'Noël');
+  return (jfCache[y] = o);
+}
+const jfName = d => feries(d.getFullYear())[iso(d)];
+function feriesDans(ws, we) {
+  const out = [];
+  for (let d = midnight(ws); d.getTime() < we; d = addDays(d, 1)) {
+    const n = jfName(d);
+    if (n) out.push(fD(d.getTime()) + ' (' + n + ')');
+  }
+  return out;
+}
+
+/* ---------- État (stocké sur le téléphone) ---------- */
+const KEY = 'ctrlRepos_v2_test';   // clé distincte de la version stable
+let memOnly = false;
+function load() { try { const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch (e) { memOnly = true; return null; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { memOnly = true; } }
+try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); } catch (e) { memOnly = true; }
+let S = Object.assign({ team: null, expl: null, weeks: {}, sorties: [], hideNote: false }, load() || {});
+let setup = S.team ? null : { step: 1 };
+let winOff = 0;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+
+/* ---------- Horaires théoriques ---------- */
+const DEFAUT_SEMAINE = [1, 1, 1, 1, 1, 0, 0];           // lun..dim
+const weekFlags = mon => S.weeks[iso(mon)] || DEFAUT_SEMAINE;
+function anchorMonday(now) {                            // lundi de la semaine de travail en cours
+  const d = midnight(now), dow = d.getDay(), mon = mondayOf(d);
+  return (dow === 5 || dow === 6 || dow === 0) ? addDays(mon, 7) : mon;
+}
+const anchorFriday = now => addDays(anchorMonday(now), -3);   // vendredi qui ouvre la semaine d'astreinte en cours
+// Les n derniers vendredis (semaines d'astreinte), du plus récent au plus ancien
+const fridayCandidates = (now, n) => { const r = []; for (let f = anchorFriday(now), i = 0; i < n; i++, f = addDays(f, -7)) r.push(f); return r; };
+function typeOfWeek(mon) {                              // 'M' matin / 'A' après-midi, alternance hebdo
+  if (!S.expl) return 'M';
+  const w = Math.round((mon - parseISO(S.expl.anchor)) / (7 * DAY));
+  return (Math.abs(w) % 2 === 0) === (S.expl.type === 'M') ? 'M' : 'A';
+}
+function shiftsOfDay(d) {                               // d = minuit local
+  const dow = d.getDay();
+  if (S.team === 'maint') return (MAINT[dow] || []).map(p => [atMin(d, p[0]), atMin(d, p[1])]);
+  const mon = mondayOf(d);
+  if (!weekFlags(mon)[(dow + 6) % 7]) return [];
+  const p = horaireFixe(d) ? WEEKEND : QUART[typeOfWeek(mon)];
+  return [[atMin(d, p[0]), atMin(d, p[1])]];
+}
+const horaireFixe = d => d.getDay() === 0 || d.getDay() === 6 || !!jfName(d);   // week-end et jours fériés : 6h00-13h30, hors A/B
+function nextShift(R) {
+  for (let d = addDays(midnight(R), -1), i = 0; i < 21; i++, d = addDays(d, 1))
+    for (const p of shiftsOfDay(d)) if (p[1] > R) return p;
+  return null;
+}
+function postLabel(ts) {
+  const d = midnight(ts);
+  if (S.team === 'maint') return 'Poste de journée';
+  if (horaireFixe(d)) return 'Poste de week-end / jour férié (6h00–13h30)';
+  return typeOfWeek(mondayOf(d)) === 'M' ? 'Quart du matin (5h00–12h30)' : 'Quart de l’après-midi (13h00–19h30)';
+}
+
+/* ---------- Fenêtres de la règle des 24h ---------- */
+// Calcule les postes et sorties dans [ws,we], regroupés en repos (gaps) ; partagé par analyse() et par la
+// recherche des repos ≥24h qualifiants (règle glissante de l'exploitation).
+function busyEtRepos(ws, we, now, blocs) {
+  const clip = x => [Math.max(x[0], ws), Math.min(x[1], we)];
+  const nonVide = x => x[1] > x[0];
+  const postes = [];
+  for (let d = addDays(midnight(ws), -1); d.getTime() <= we; d = addDays(d, 1)) postes.push(...shiftsOfDay(d));
+  const aj = ajusterPostes(postes, blocs);
+  const shifts = aj.adj.map(clip).filter(nonVide);
+  const fin = x => x.ret != null ? x.ret : Math.max(now, x.dep + 1);   // sortie en cours : jusqu'à maintenant
+  const sorties = S.sorties.map(x => clip([x.dep, fin(x)])).filter(nonVide);
+  const busy = [];
+  shifts.concat(sorties).sort((a, b) => a[0] - b[0]).forEach(x => {
+    const l = busy[busy.length - 1];
+    if (l && x[0] <= l[1]) l[1] = Math.max(l[1], x[1]); else busy.push([x[0], x[1]]);
+  });
+  const gaps = [];
+  let cur = ws;
+  busy.forEach(b => { if (b[0] > cur) gaps.push([cur, b[0]]); cur = Math.max(cur, b[1]); });
+  if (cur < we) gaps.push([cur, we]);
+  return { shifts: shifts, sorties: sorties, gaps: gaps, aj: aj };
+}
+function winAt(k, now) {
+  if (S.team === 'maint') {                             // ven fin de poste 16h03 -> lun 7h30
+    const we = F => atMin(addDays(F, 3), 450);
+    let f = midnight(now); f = addDays(f, -((f.getDay() + 2) % 7));   // vendredi précédent ou du jour
+    if (we(f) <= now) f = addDays(f, 7);
+    f = addDays(f, 7 * k);
+    return { kind: 'maint', ws: atMin(f, 963), we: we(f) };
+  }
+  // Exploitation, règle glissante : fenêtre de REGLES.repos24hBudget (120h) à partir du lundi de la semaine
+  // calendaire de rang k. Hypothèse (confirmée) : si le repos de 24h n'est pas déjà acquis au début de cette
+  // semaine, il l'a forcément été le dimanche de la semaine précédente — inutile de vérifier plus tôt.
+  // (Lundi de LA semaine civile, jamais décalé au lundi suivant : sinon la fenêtre ne serait pas encore
+  // « ouverte » le vendredi, samedi ou dimanche, alors que c'est justement là que l'astreinte commence.)
+  const ws = addDays(mondayOf(midnight(now)), 7 * k).getTime();
+  return { kind: 'expl', ws: ws, we: ws + REGLES.repos24hBudget };
+}
+const winLabel = w => {
+  if (w.kind === 'maint') return 'Week-end : ' + fDT(w.ws) + ' → ' + fDT(w.we);
+  return 'Repos glissant : depuis le ' + fDT(w.ws) + ', jusqu’au ' + fDT(w.we) + ' au plus tard';
+};
+
+/* ---------- Période de référence ---------- */
+const winMaint = f => ({ kind: 'maint', ws: atMin(f, 963), we: atMin(addDays(f, 3), 450) });
+// Période contrôlée par défaut. Exploitation : le cycle de repos glissant en cours (depuis la fin du dernier
+// repos ≥24h). Maintenance : le week-end en cours ; entre deux week-ends, le dernier week-end s'il comporte
+// des sorties (contrôle a posteriori), sinon le prochain.
+function winRef(now) {
+  const w0 = winAt(0, now);
+  if (S.team !== 'maint' || now >= w0.ws) return w0;
+  const w1 = winAt(-1, now);
+  return S.sorties.some(x => x.dep >= w1.ws && x.dep < w1.we) ? w1 : w0;
+}
+// Période affichée : la période de référence décalée de k périodes (boutons ◀ ▶)
+function winDe(k, now) {
+  const b = winRef(now);
+  return b.kind === 'expl' ? winAt(k, now) : winMaint(addDays(midnight(b.ws), 7 * k));
+}
+
+/* ---------- Règle des 9h ---------- */
+const N9 = REGLES.repos9h;
+
+// Week-end de la maintenance (fin de poste du vendredi -> début de poste du lundi) contenant l'instant ts, sinon null
+function weekendOf(ts) {
+  let f = midnight(ts); f = addDays(f, -((f.getDay() + 2) % 7));
+  for (let k = 0; k < 2; k++, f = addDays(f, -7)) {
+    const w = { kind: 'maint', ws: atMin(f, 963), we: atMin(addDays(f, 3), 450) };
+    if (ts >= w.ws && ts < w.we) return w;
+  }
+  return null;
+}
+
+// Maintenance : 9 h de repos consécutifs avant OU après la 1re sortie du week-end, ET avant OU après la dernière.
+function regle9Maint(w, now) {
+  const L = S.sorties.filter(x => x.dep >= w.ws && x.dep < w.we).sort((a, b) => a.dep - b.dep);
+  const n = L.length;
+  const r = { n: n, L: L, first: null, last: null, decalage: null, level: 'info', title: 'Règle des 9h : aucune sortie sur le week-end', lines: [] };
+  if (!n) return r;
+  const avant = i => i === 0 ? L[0].dep - w.ws : (L[i - 1].ret != null ? L[i].dep - L[i - 1].ret : 0);
+  const apres = i => i < n - 1 ? (L[i].ret != null ? L[i + 1].dep - L[i].ret : 0)
+                               : (L[i].ret != null ? w.we - L[i].ret : null);   // null : sortie en cours
+  const stat = i => { const a = avant(i), p = apres(i); return { avant: a, apres: p, ok: a >= N9 ? true : (p == null ? null : p >= N9) }; };
+  r.first = stat(0); r.last = stat(n - 1);
+  const der = L[n - 1];
+  if (r.last.ok === false) r.decalage = { ret: der.ret, debut: der.ret + N9 };
+  if (n >= 2 && r.first.ok === false) {
+    r.level = 'ko'; r.title = 'Règle des 9h non respectée autour de la 1re sortie';
+    r.lines.push('Appeler un responsable.');
+  } else if (r.decalage) {
+    const nr = niveauReprise(repriseApres(der.ret, [{ dep: der.dep, ret: der.ret, fin: r.decalage.debut }]));
+    r.level = nr.level === 'warn' && now >= r.decalage.debut ? 'info' : nr.level;   // reprise décalée déjà passée : simple information
+    r.title = nr.title; r.lines = nr.lines;
+  } else if (r.last.ok === null) {
+    r.level = 'warn'; r.title = 'Règle des 9h à protéger';
+    const limite = w.we - N9;
+    r.lines.push(limite >= now
+      ? 'Retour au domicile avant <b>' + fDT(limite) + '</b> nécessaire pour éviter un décalage de la reprise.'
+      : 'Reprise décalée au plus tôt à <b>' + fDT(now + N9) + '</b> (retour immédiat + 9 h).');
+  } else { r.level = 'ok'; r.title = 'Règle des 9h respectée'; }
+  return r;
+}
+
+// Exploitation, et maintenance hors week-end : 9 h de repos consécutifs entre la fin d'une sortie et la prise de poste.
+// Seule la sortie la plus tardive est prise en compte.
+function regle9Jour(now) {
+  const r = { level: 'info', title: 'Règle des 9h : aucune reprise en attente', lines: [] };
+  const open = S.sorties.find(x => x.ret == null);
+  if (open) {
+    const p = nextShift(now);
+    if (!p || p[0] <= now) return r;
+    const limite = p[0] - N9;
+    r.level = 'warn'; r.title = 'Règle des 9h à protéger';
+    r.lines.push(limite >= now
+      ? 'Retour au domicile avant <b>' + fDT(limite) + '</b> pour une reprise normale à ' + fDT(p[0]) + '.'
+      : 'Reprise décalée au plus tôt à <b>' + fDT(now + N9) + '</b> (retour immédiat + 9 h).');
+    return r;
+  }
+  const done = S.sorties.filter(x => x.ret != null).sort((a, b) => b.ret - a.ret)[0];
+  if (!done) { r.title = 'Règle des 9h : aucune sortie enregistrée'; return r; }
+  const pp = repriseApres(done.ret, [{ dep: done.dep, ret: done.ret, fin: done.ret + N9 }]);
+  if (!pp || pp.theo[1] <= now) return r;
+  const nr = niveauReprise(pp);
+  if (nr) return nr;
+  r.level = 'ok'; r.title = 'Règle des 9h : reprise normale';
+  r.lines.push('Prise de poste à <b>' + fDT(pp.theo[0]) + '</b> · repos obtenu : ' + fDur(pp.theo[0] - done.ret) + '.');
+  return r;
+}
+
+// Bandeau 9h du haut de page, pour la sortie la plus tardive : sortie de week-end (maintenance) -> règle du week-end
+// de référence ; sinon -> repos de 9 h avant la prise de poste (exploitation, et maintenance en semaine).
+function top9(now) {
+  const dernier = S.sorties.slice().sort((a, b) => (b.ret != null ? b.ret : b.dep) - (a.ret != null ? a.ret : a.dep))[0];
+  if (!dernier) return { level: 'info', title: 'Règle des 9h : aucune sortie enregistrée', lines: [] };
+  if (S.team === 'maint') {
+    const w = weekendOf(dernier.dep);
+    if (w && winRef(now).ws === w.ws) return regle9Maint(w, now);
+  }
+  return regle9Jour(now);
+}
+
+// Intervalles de repos obligatoire [retour, retour + 9 h] qui décalent la prise de poste suivante
+function blocsRepos(now) {
+  const blocs = [];
+  if (S.team === 'expl') {
+    S.sorties.forEach(x => { if (x.ret != null) blocs.push({ dep: x.dep, ret: x.ret, fin: x.ret + N9 }); });
+  } else {
+    const vus = {};
+    S.sorties.forEach(x => {
+      const w = weekendOf(x.dep);
+      if (!w) { if (x.ret != null) blocs.push({ dep: x.dep, ret: x.ret, fin: x.ret + N9 }); return; }   // semaine : 9 h avant la prise de poste
+      if (vus[w.ws]) return;
+      vus[w.ws] = 1;
+      const r = regle9Maint(w, now);
+      if (r.decalage) blocs.push({ dep: r.L[r.n - 1].dep, ret: r.decalage.ret, fin: r.decalage.debut });
+    });
+  }
+  return blocs;
+}
+
+// Postes après décalage : début repoussé à la fin du repos obligatoire, poste supprimé s'il est entièrement couvert.
+// adj : [début ajusté, fin, début théorique] ; decal : plages de décalage {de, a}
+function ajusterPostes(postes, blocs) {
+  const adj = [], decal = [];
+  postes.forEach(p => {
+    let a = p[0];
+    blocs.forEach(b => { if (b.dep < p[0] && b.fin > a) a = b.fin; });
+    if (a > p[0]) decal.push({ de: p[0], a: Math.min(a, p[1]) });
+    if (a < p[1]) adj.push([a, p[1], p[0]]);
+  });
+  return { adj: adj, decal: decal };
+}
+
+// Première prise de poste effective après l'instant R, compte tenu des repos obligatoires blocs ;
+// sautes : postes entièrement couverts par le repos (ex. poste du matin de la maintenance, puis reprise l'après-midi)
+function repriseApres(R, blocs) {
+  const sautes = [];
+  for (let d = addDays(midnight(R), -1), i = 0; i < 21; i++, d = addDays(d, 1))
+    for (const p of shiftsOfDay(d)) {
+      if (p[1] <= R) continue;
+      const a = ajusterPostes([p], blocs).adj;
+      if (a.length) return { theo: p, debut: a[0][0], sautes: sautes };
+      sautes.push(p);
+    }
+  return null;
+}
+const prochainPoste = R => repriseApres(R, blocsRepos(Date.now()));
+
+// Journée entière couverte par le repos (aucun poste ce jour-là) : il faut appeler un responsable
+const jourPerdu = pp => pp.sautes.length > 0 && midnight(pp.debut).getTime() !== midnight(pp.sautes[0][0]).getTime();
+const ligneCouvert = pp => jourPerdu(pp)
+  ? 'Poste du ' + fD(pp.sautes[0][0]) + ' couvert par le repos de 9h : appeler un responsable.'
+  : 'Poste de ' + fT(pp.sautes[0][0]) + ' à ' + fT(pp.sautes[0][1]) + ' couvert par le repos de 9h.';
+// Bandeau commun (maintenance, exploitation) quand la prise de poste est décalée ; null si la reprise est normale
+function niveauReprise(pp) {
+  if (!pp || (!pp.sautes.length && pp.debut <= pp.theo[0])) return null;
+  if (jourPerdu(pp)) return { level: 'ko', title: 'Règle des 9h : appeler un responsable', lines: [ligneCouvert(pp)] };
+  const normal = pp.sautes.length ? pp.sautes[0][0] : pp.theo[0];   // heure de prise de poste initialement prévue
+  const l = ['Reprise au plus tôt à <b>' + fDT(pp.debut) + '</b> (poste normal : ' + fT(normal) + ').'];
+  if (pp.sautes.length) l.push(ligneCouvert(pp));
+  return { level: 'warn', title: 'Règle des 9h : reprise décalée', lines: l };
+}
+
+/* ---------- Analyse de la règle des 24h ---------- */
+function analyse(w0, now) {
+  const T = REGLES.repos24h;
+  const blocs = blocsRepos(now);
+  let w = w0, prolonge = null;
+  if (w0.kind === 'maint') {            // décalage de la reprise du lundi : la période de repos se prolonge d'autant
+    const suite = [];
+    for (let d = midnight(w0.we), i = 0; i < 2; i++, d = addDays(d, 1)) suite.push(...shiftsOfDay(d).filter(p => p[0] >= w0.we));
+    for (const p of suite) {
+      const a = ajusterPostes([p], blocs).adj;
+      if (a.length) { if (a[0][0] > w0.we) { prolonge = { de: w0.we, a: a[0][0] }; w = Object.assign({}, w0, { we: a[0][0] }); } break; }
+    }
+  }
+  // Exploitation (règle glissante) : un repos ≥24h qui commence avant l'échéance (w.we) est valable même s'il se
+  // termine après — on ne le tronque donc pas à w.we pour juger de sa longueur, contrairement au week-end fixe.
+  const marge = w.kind === 'expl' ? 10 * DAY : 0;
+  const br = busyEtRepos(w.ws, w.we + marge, now, blocs);
+  const aj = br.aj;
+  const clip = x => [Math.max(x[0], w.ws), Math.min(x[1], w.we)];
+  const nonVide = x => x[1] > x[0];
+  const shifts = br.shifts.map(clip).filter(nonVide);
+  const sorties = br.sorties.map(clip).filter(nonVide);                  // pour l'affichage (frise, liste)
+  const sortiesBrut = br.sorties;                                        // non tronquées à w.we : servent au calcul
+  const gapsBrut = br.gaps;                                              // non tronqués : servent au calcul du niveau
+  const gaps = gapsBrut.map(g => [Math.max(g[0], w.ws), Math.min(g[1], w.we)]).filter(nonVide);   // pour la frise
+  const finX = x => x.ret != null ? x.ret : Math.max(now, x.dep + 1);
+  const ouverte = S.sorties.find(x => x.ret == null && Math.min(finX(x), w.we) > Math.max(x.dep, w.ws));
+
+  const r = { w: w, now: now, shifts: shifts, sorties: sorties, gaps: gaps, prolonge: prolonge, level: 'ok', title: '', lines: [], jf: feriesDans(w.ws, w.we) };
+  const longest = gapsBrut.reduce((m, g) => Math.max(m, Math.min(g[1], now) - g[0]), 0);
+  const noteDec = g => {                // précise si le repos compté inclut un décalage de prise de poste
+    const dec = aj.decal.filter(d => d.a > g[0] && d.de < g[1]);
+    if (prolonge && prolonge.a > g[0] && prolonge.de < g[1]) dec.push({ de: prolonge.de, a: prolonge.a });
+    if (dec.length) r.lines.push('Ce repos inclut un décalage de prise de poste : ' + dec.map(d => fDT(d.de) + ' → ' + fT(d.a)).join(', ') + '.');
+  };
+
+  if (now < w.ws) {
+    r.level = 'info';
+    r.title = w.kind === 'maint' ? 'Pas de week-end en cours' : 'Cycle à venir';
+    r.lines.push(w.kind === 'maint'
+      ? 'Prochain week-end : ' + fDT(w.ws) + ' → ' + fDT(w.we) + '. La règle des 24h ne concerne que le week-end.'
+      : 'Débute le ' + fDT(w.ws) + '.');
+    return r;
+  }
+
+  if (w.kind === 'maint') {             // repos qui doit tenir tout entier dans le week-end
+    if (now >= w.we) {
+      if (longest >= T) { r.title = 'Repos de 24h respecté'; r.lines.push('Plus long repos : ' + fDur(longest) + '.'); noteDec(gapsBrut.find(g => Math.min(g[1], now) - g[0] === longest)); }
+      else { r.level = 'ko'; r.title = 'Repos de 24h NON respecté'; r.lines.push('Plus long repos : ' + fDur(longest) + '.'); }
+      return r;
+    }
+    const acquis = gapsBrut.find(g => Math.min(g[1], now) - g[0] >= T);
+    if (acquis) {
+      r.title = 'Repos de 24h acquis';
+      r.lines.push('Du ' + fDT(acquis[0]) + ' au ' + fDT(acquis[0] + T) + ' sans poste ni sortie.');
+      noteDec([acquis[0], acquis[0] + T]);
+      return r;
+    }
+    const cand = gapsBrut.filter(g => g[1] > now && g[1] - g[0] >= T);
+    if (!sorties.length) {
+      if (cand.length) { r.title = 'Aucune sortie sur la période'; r.lines.push('Le planning laisse un repos de 24h.'); }
+      else { r.level = 'warn'; r.title = 'Aucun repos de 24h dans le planning'; r.lines.push('Veuillez vérifier les jours travaillés.'); }
+      return r;
+    }
+    if (!cand.length) {
+      r.level = 'ko';
+      if (ouverte) { r.title = 'Cette sortie prive du repos de 24h'; r.lines.push('Appeler un responsable pour être remplacé sur cette sortie.'); }
+      else { r.title = 'Repos de 24h devenu impossible'; r.lines.push('Prévenir un responsable.'); }
+      return r;
+    }
+    const limite = Math.max.apply(null, cand.map(g => g[1] - T));
+    r.level = 'warn';
+    if (ouverte) {
+      r.title = 'Repos de 24h à protéger';
+      r.lines.push('Retour au domicile avant <b>' + fDT(limite) + '</b> nécessaire pour conserver un repos de 24h.');
+      r.lines.push('Si ce n’est pas possible, appeler un responsable pour être remplacé.');
+    } else {
+      const libre = cand.find(g => g[0] <= now);
+      r.title = 'Repos de 24h pas encore acquis';
+      if (libre) r.lines.push('Sans nouvelle sortie jusqu’à <b>' + fDT(libre[0] + T) + '</b>, le repos de 24h sera acquis.');
+      if (limite > now) r.lines.push('En cas de nouvelle sortie, retour au domicile avant <b>' + fDT(limite) + '</b>.');
+    }
+    return r;
+  }
+
+  // Exploitation : un repos ≥24h doit avoir COMMENCÉ avant l'échéance (w.we = fin du dernier repos ≥24h + 5 jours) ;
+  // sa longueur s'apprécie sur son étendue réelle, même s'il se termine après l'échéance (contrairement au week-end
+  // fixe de la maintenance, qui doit tenir tout entier dans sa fenêtre).
+  const acquis = gapsBrut.find(g => Math.min(g[1], now) - g[0] >= T);
+  if (acquis) {
+    r.title = 'Repos de 24h glissant acquis';
+    r.lines.push('Du ' + fDT(acquis[0]) + ' au ' + fDT(acquis[0] + T) + ' sans poste ni sortie.');
+    noteDec([acquis[0], acquis[0] + T]);
+    return r;
+  }
+  const cand = gapsBrut.filter(g => g[0] <= w.we && g[1] - g[0] >= T);
+  if (!sortiesBrut.length) {
+    if (cand.length) { r.title = 'Aucune sortie sur la période'; r.lines.push('Le planning laisse un repos de 24h.'); }
+    else { r.level = 'warn'; r.title = 'Aucun repos de 24h dans le planning'; r.lines.push('Veuillez vérifier les jours travaillés.'); }
+    return r;
+  }
+  if (!cand.length) {
+    r.level = 'ko';
+    if (ouverte) { r.title = 'Cette sortie prive du repos de 24h'; r.lines.push('Appeler un responsable pour être remplacé sur cette sortie.'); }
+    else { r.title = 'Repos de 24h glissant devenu impossible'; r.lines.push('Prévenir un responsable.'); }
+    return r;
+  }
+  if (ouverte) {
+    r.level = 'warn';
+    r.title = 'Repos de 24h glissant à protéger';
+    r.lines.push('Retour au domicile avant <b>' + fDT(w.we) + '</b> nécessaire pour ne pas dépasser 5 jours sans repos de 24h.');
+    r.lines.push('Si ce n’est pas possible, appeler un responsable pour être remplacé.');
+  } else {
+    const prem = cand[0];
+    r.title = prem[0] > now ? 'Repos de 24h glissant assuré par le planning' : 'Repos de 24h glissant en cours';
+    r.lines.push((prem[0] > now ? 'Prochain repos de 24h prévu à partir du ' : 'Repos amorcé le ') + fDT(prem[0]) + '.');
+  }
+  return r;
+}
+
+/* ---------- Rendu ---------- */
+// Aspect alternatif géré en CSS (survol / appui) : réveil avec ondes sonores, drapeau incliné
+const ICON_ALARM = '<svg viewBox="0 0 64 64" aria-hidden="true">' +
+  '<g class="al-waves" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M7 28c-3 5-3 11 0 16M2 24c-5 8-5 16 0 24M57 28c3 5 3 11 0 16M62 24c5 8 5 16 0 24"/></g>' +
+  '<g class="al-body"><circle cx="32" cy="36" r="19" fill="none" stroke="currentColor" stroke-width="5"/><path d="M32 25v12l8 5" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 17c1-6 6-11 12-12M55 17c-1-6-6-11-12-12" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M19 52l-6 7M45 52l6 7" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></g></svg>';
+const ICON_FLAG = (() => {
+  let s = '';
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) if ((r + c) % 2 === 0) s += '<rect x="' + (14 + c * 7) + '" y="' + (8 + r * 8) + '" width="7" height="8" fill="currentColor"/>';
+  return '<svg viewBox="0 0 64 64" aria-hidden="true"><g class="fl"><rect x="14" y="8" width="42" height="32" fill="none" stroke="currentColor" stroke-width="3"/>' + s + '<rect x="9" y="4" width="5" height="58" rx="2" fill="currentColor"/></g></svg>';
+})();
+const ICONS = { ok: '✓', warn: '⚠', ko: '⛔', info: 'ℹ' };
+
+const bannerHtml = r => '<div class="banner ' + r.level + '"><b>' + ICONS[r.level] + ' ' + r.title + '</b>' + r.lines.map(l => '<p>' + l + '</p>').join('') + '</div>';
+const jfHtml = list => list.length ? '<div class="note">⚠ Jour férié sur la période : ' + list.join(', ') + '. Le calcul n’en tient pas compte : à vérifier avec un responsable.</div>' : '';
+
+function setupHtml() {
+  if (setup.step === 2) {
+    if (!setup.friday) setup.friday = anchorFriday(Date.now());
+    const opt = f => '<option value="' + iso(f) + '"' + (iso(f) === iso(setup.friday) ? ' selected' : '') + '>' + fD(f.getTime()) + ' au ' + fD(addDays(f, 6).getTime()) + '</option>';
+    return '<header><h1>Contrôle des repos</h1></header>' +
+      '<div class="card"><h2>Exploitation</h2>' +
+      '<p>Astreinte du <select class="wksel" data-a="friday">' + fridayCandidates(Date.now(), 6).map(opt).join('') + '</select> : quel est le quart aujourd’hui ?</p>' +
+      '<div class="choice"><button class="act" data-a="type" data-v="M">Quart du matin<br><small>5h00 – 12h30</small></button>' +
+      '<button class="act" data-a="type" data-v="A">Quart de l’après-midi<br><small>13h00 – 19h30</small></button></div>' +
+      '<button class="act ghost" data-a="setup">← Retour</button></div>';
+  }
+  return '<header><h1>Contrôle des repos</h1></header>' +
+    '<div class="card"><h2>Choix de l’équipe</h2>' +
+    '<div class="choice"><button class="act" data-a="team" data-v="maint">Maintenance</button>' +
+    '<button class="act" data-a="team" data-v="expl">Exploitation</button></div>' +
+    (S.team ? '<button class="act ghost" data-a="cancel">Annuler</button>' : '') + '</div>';
+}
+
+function headerHtml(now) {
+  let sub = 'Équipe Maintenance';
+  if (S.team === 'expl') {
+    const fri = anchorFriday(now), mon = addDays(fri, 3);
+    sub = 'Équipe Exploitation · astreinte du ' + fD(fri.getTime()) + ' au ' + fD(addDays(fri, 6).getTime()) + ' : ' + (typeOfWeek(mon) === 'M' ? 'matin' : 'après-midi');
+  }
+  return '<header><div><h1>Contrôle des repos</h1><div class="sub">' + sub + '</div></div><button class="gear" data-a="setup">⚙ Équipe</button></header>';
+}
+
+function buttonsHtml() {
+  const open = S.sorties.find(x => x.ret == null);
+  const done = S.sorties.filter(x => x.ret != null).sort((a, b) => b.ret - a.ret)[0];
+  const lastDep = S.sorties.slice().sort((a, b) => b.dep - a.dep)[0];
+  return '<div class="btns">' +
+    '<button class="btn dep" data-a="dep">' + ICON_ALARM + '<span>Départ<br>sortie d’astreinte</span><small>' + (open ? 'En cours depuis ' + fDT(open.dep) : (lastDep ? 'Dernier : ' + fDT(lastDep.dep) : '')) + '</small></button>' +
+    '<button class="btn ret" data-a="ret">' + ICON_FLAG + '<span>Retour<br>au domicile</span><small>' + (done ? 'Dernier : ' + fDT(done.ret) : '') + '</small></button></div>';
+}
+
+function nextPostHtml() {
+  const open = S.sorties.find(x => x.ret == null);
+  const done = S.sorties.filter(x => x.ret != null).sort((a, b) => b.ret - a.ret)[0];
+  let body;
+  if (open) body = '<p>Sortie en cours depuis ' + fDT(open.dep) + '. Enregistrer le retour au domicile pour calculer la reprise.</p>';
+  else if (!done) body = '<p class="mut">Enregistrer une sortie pour afficher le prochain poste.</p>';
+  else {
+    const R = done.ret, pp = prochainPoste(R);
+    if (!pp) body = '<p>Aucun poste trouvé.</p>';
+    else {
+      const p = pp.theo, decale = pp.debut > p[0], jf = jfName(midnight(pp.debut));
+      body = (decale || pp.sautes.length ? '<p class="mut">Reprise décalée</p>' : '') +
+        '<p class="big">' + fDT(pp.debut) + '</p><p>' + postLabel(pp.debut) + '</p>' +
+        (pp.sautes.length ? '<p>' + ligneCouvert(pp) + '</p>' : '') +
+        (decale ? '<p>Horaire normal : ' + fT(p[0]) + ' · décalage de ' + fDur(pp.debut - p[0]) + ' (compté comme du repos).</p>'
+                : (p[0] <= R ? '<p>Le poste avait déjà commencé au retour au domicile (' + fDT(R) + ').</p>'
+                             : '<p>Repos entre le retour (' + fDT(R) + ') et la reprise : <b>' + fDur(p[0] - R) + '</b></p>')) +
+        (jf ? '<div class="note">⚠ ' + fD(pp.debut) + ' est un jour férié (' + jf + ') : à vérifier avec un responsable.</div>' : '');
+    }
+  }
+  return '<div class="card"><h2>Prochain poste</h2>' + body + '</div>';
+}
+
+function regle9CardHtml(w, now) {
+  const chk = ok => ok === true ? '✓' : ok === false ? '✗' : '…';
+  // La fenêtre w vient de la règle des 24h (glissante pour l'exploitation) : ne pas reprendre son libellé ici,
+  // qui porterait à confusion sous « Règle des 9h ». On indique juste la période des sorties listées ci-dessous.
+  const sousTitre = w.kind === 'maint' ? winLabel(w) : 'Sorties entre le ' + fDT(w.ws) + ' et le ' + fDT(w.we);
+  let h = '<div class="card"><h2>Règle des 9h' + (sousTitre ? '<br><span class="mut">' + sousTitre + '</span>' : '') + '</h2>';
+  if (S.team === 'maint') {
+    const r = regle9Maint(w, now);
+    if (!r.n) h += '<p class="mut">Aucune sortie sur cette période.</p>';
+    else {
+      const ligne = (lib, s, x) => '<p><b>' + lib + '</b> (' + fDT(x.dep) + ')<br>Repos avant : ' + fDur(s.avant) + ' · après : ' + (s.apres == null ? 'en cours' : fDur(s.apres)) + ' → <b>' + chk(s.ok) + '</b></p>';
+      h += r.n === 1 ? ligne('1re et dernière sortie', r.first, r.L[0])
+                     : ligne('1re sortie', r.first, r.L[0]) + ligne('Dernière sortie', r.last, r.L[r.n - 1]);
+    }
+    h += '<p class="mut">Au moins 9 h de repos consécutifs avant ou après la 1re sortie du week-end, et avant ou après la dernière.</p>';
+  } else {
+    const l0 = S.sorties.filter(x => x.dep >= w.ws && x.dep < w.we).sort((a, b) => a.dep - b.dep);
+    const suiv = x => x.ret != null ? nextShift(x.ret) : null;
+    // plusieurs sorties avant une même prise de poste : seule la plus tardive est indiquée
+    const l = l0.filter(x => x.ret == null || !l0.some(y => y !== x && y.ret != null && y.ret > x.ret && suiv(y) && suiv(x) && suiv(y)[0] === suiv(x)[0]));
+    if (!l.length) h += '<p class="mut">Aucune sortie sur cette période.</p>';
+    l.forEach(x => {
+      if (x.ret == null) { h += '<p>' + fDT(x.dep) + ' : sortie en cours.</p>'; return; }
+      const p = nextShift(x.ret), rep = p ? p[0] - x.ret : null;
+      h += '<p>' + fDT(x.dep) + ' → ' + fT(x.ret) + (p ? '<br>Prise de poste ' + fDT(p[0]) + ' · ' +
+        (rep < 0 ? 'poste commencé avant le retour → <b>✗ reprise décalée</b>'
+                 : 'repos ' + fDur(rep) + ' → <b>' + (rep >= N9 ? '✓' : '✗ reprise décalée') + '</b>') : '') + '</p>';
+    });
+    h += '<p class="mut">Au moins 9 h de repos consécutifs entre la fin de la sortie et chaque prise de poste.</p>';
+  }
+  return h + '</div>';
+}
+
+function timelineHtml(r) {
+  const w = r.w, L = w.we - w.ws, T = REGLES.repos24h;
+  const pc = t => ((t - w.ws) / L * 100).toFixed(3);
+  const box = (cls, a, b) => '<i class="' + cls + '" style="left:' + pc(a) + '%;width:' + ((b - a) / L * 100).toFixed(3) + '%"></i>';
+  let h = '<div class="tl">';
+  r.gaps.forEach(g => { h += box(g[1] - g[0] >= T ? 'long' : 'free', g[0], g[1]); });
+  r.shifts.forEach(x => { h += box('sh', x[0], x[1]); });
+  r.sorties.forEach(x => { h += box('so', x[0], x[1]); });
+  if (r.now >= w.ws && r.now <= w.we) h += '<i class="now" style="left:' + pc(r.now) + '%"></i>';
+  h += '</div><div class="ticks">';
+  for (let d = addDays(midnight(w.ws), 1); d.getTime() < w.we; d = addDays(d, 1)) h += '<span style="left:' + pc(d.getTime()) + '%">' + JOURS[d.getDay()] + ' ' + d.getDate() + '</span>';
+  h += '</div><div class="ends"><span>' + fDT(w.ws) + '</span><span>' + fDT(w.we) + '</span></div>';
+  h += '<div class="leg"><span style="--c:var(--ko)">sortie</span><span style="--c:var(--shift)">poste</span><span style="--c:var(--ok)">repos ≥ 24h</span><span style="--c:var(--free)">repos &lt; 24h</span></div>';
+  return h;
+}
+
+function ruleCardHtml(r, r0) {
+  return '<div class="card"><div class="navrow"><button class="nav" data-a="win" data-d="-1" aria-label="Période précédente">◀</button>' +
+    '<h2>Règle des 24h<br><span class="mut">' + winLabel(r.w) + '</span></h2>' +
+    '<button class="nav" data-a="win" data-d="1" aria-label="Période suivante">▶</button></div>' +
+    (r === r0 ? '' : bannerHtml(r)) + timelineHtml(r) + jfHtml(r.jf) +
+    (r.prolonge ? '<p class="mut">Période prolongée jusqu’à ' + fDT(r.prolonge.a) + ' : décalage de prise de poste, compté comme du repos.</p>' : '') +
+    (S.team === 'maint' ? '<p class="mut">Week-end : de la fin du poste du vendredi (16h03) au début du poste du lundi (7h30).</p>'
+                        : '<p class="mut">Règle glissante : chaque semaine de 7 jours, quelle qu’elle soit, doit compter 24h de repos — soit, au plus 5 jours entre deux repos de 24h.</p>') + '</div>';
+}
+
+function gridHtml(now, winOff) {
+  const t = { M: 'du matin', A: 'de l’après-midi' };
+  // Une semaine d'astreinte (ven → jeu) chevauche deux semaines calendaires : celle qui commence le vendredi
+  // (repos avant la sortie) et celle qui se termine le jeudi (reprise). C'est cette paire qu'il faut renseigner,
+  // pas « cette semaine et la suivante ».
+  const monTard = addDays(anchorMonday(now), 7 * winOff);   // lundi de la semaine calendaire lun-jeu de l'astreinte affichée
+  let h = '<div class="card"><h2>Jours travaillés</h2><p class="mut">Indiquez vos jours de repos ci-dessous</p>';
+  [addDays(monTard, -7), monTard].forEach(mon => {
+    const fl = weekFlags(mon), ty = typeOfWeek(mon);
+    h += '<div class="wk"><b>Semaine du ' + fD(mon.getTime()) + ' · quart ' + t[ty] + '</b><div class="chips">';
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(mon, i), on = fl[i];
+      const hrs = !on ? 'repos' : (horaireFixe(d) ? '6h–13h30' : (ty === 'M' ? '5h–12h30' : '13h–19h30'));
+      h += '<button class="chip' + (on ? ' on' : '') + '" data-a="day" data-w="' + iso(mon) + '" data-i="' + i + '">' + JOURS[d.getDay()] + '<br>' + d.getDate() + '<span>' + hrs + '</span>' + (jfName(d) ? '<em>JF</em>' : '') + '</button>';
+    }
+    h += '</div></div>';
+  });
+  return h + '</div>';
+}
+
+function listHtml() {
+  const l = S.sorties.slice().sort((a, b) => b.dep - a.dep);
+  let h = '<div class="card"><h2>Sorties enregistrées</h2>';
+  if (!l.length) h += '<p class="mut">Aucune sortie.</p>';
+  l.forEach(x => {
+    h += '<div class="it"><span>' + fDT(x.dep) + ' → ' + (x.ret != null ? fT(x.ret) + ' <span class="mut">(' + fDur(x.ret - x.dep) + ')</span>' : '<b>en cours</b>') + '</span><button data-a="edit" data-id="' + x.id + '">Modifier</button></div>';
+  });
+  h += '<div class="row"><button class="act ghost" data-a="add">+ Ajouter manuellement</button>' + (l.length ? '<button class="act ghost" data-a="clear">Tout effacer</button>' : '') + '</div></div>';
+  return h;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (setup) { app.innerHTML = setupHtml(); return; }
+  const now = Date.now();
+  const wS = winDe(winOff, now);
+  const r0 = analyse(winRef(now), now);
+  const rS = winOff === 0 ? r0 : analyse(wS, now);
+  app.innerHTML = headerHtml(now) +
+    (memOnly ? '<div class="note">⛔ Le téléphone ne conserve pas les données (bloqueur de cookies ?). Les heures enregistrées seront perdues à la fermeture de la page. Désactiver le bloqueur pour cette page.</div>' : '') +
+    bannerHtml(top9(now)) + bannerHtml(r0) + (winOff === 0 ? jfHtml(r0.jf) : '') + buttonsHtml() + nextPostHtml() +
+    regle9CardHtml(wS, now) + ruleCardHtml(rS, r0) + (S.team === 'expl' ? gridHtml(now, winOff) : '') + listHtml() +
+    '<p class="mut">Calcul sur horaires théoriques. Ne tient compte ni des absences ni des jours fériés (alerte seulement). Version 0.2 (test) : règle des 9h.</p>';
+}
+
+/* ---------- Fenêtres modales et messages ---------- */
+const modal = document.getElementById('modal');
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2500);
+}
+function openNote() {
+  modal.innerHTML = '<div class="dlg"><h3>Avant de commencer</h3>' +
+    '<p>Veuillez désactiver le <b>bloqueur de cookies</b> (ou de pistage) pour cette page. À défaut, le téléphone risque de perdre les heures de départ et de retour enregistrées.</p>' +
+    '<label><input type="checkbox" id="f-hide"> Ne plus afficher ce rappel</label>' +
+    '<div class="row"><button class="act" data-a="note">Compris</button></div></div>';
+  modal.hidden = false;
+}
+function openForm(id, pre) {
+  const x = id ? S.sorties.find(s => s.id === id) : null;
+  pre = pre || {};
+  const dep = x ? x.dep : pre.dep, ret = x ? x.ret : pre.ret;
+  modal.innerHTML = '<div class="dlg"><h3>' + (x ? 'Modifier la sortie' : 'Ajouter une sortie') + '</h3>' +
+    (pre.msg ? '<p>' + pre.msg + '</p>' : '') +
+    '<label>Départ<input type="datetime-local" id="f-dep" value="' + (dep ? loc(dep) : '') + '"></label>' +
+    '<label>Retour au domicile (vide = sortie en cours)<input type="datetime-local" id="f-ret" value="' + (ret ? loc(ret) : '') + '"></label>' +
+    '<p class="err" id="f-err"></p><div class="row"><button class="act" data-a="save" data-id="' + (x ? x.id : '') + '">Enregistrer</button>' +
+    (x ? '<button class="act danger" data-a="del" data-id="' + x.id + '">Supprimer</button>' : '') +
+    '<button class="act ghost" data-a="close">Annuler</button></div></div>';
+  modal.hidden = false;
+}
+
+/* ---------- Actions ---------- */
+function apresEnregistrement(msg) {
+  save(); winOff = 0; render(); window.scrollTo(0, 0); toast(msg);
+  const now = Date.now();
+  const wr = winRef(now);
+  // Maintenance : ne pas re-vibrer pour un week-end déjà refermé (winRef peut pointer sur le précédent, a posteriori).
+  // Exploitation : la fenêtre glissante commence toujours à la fin du dernier repos ≥24h (ws<=now) ; un dépassement
+  // du budget (now>=we) est un KO en cours, pas un historique, donc pas de garde sur 'we' dans ce cas.
+  const vivante = S.team === 'maint' ? (now >= wr.ws && now < wr.we) : true;
+  if (vivante && (analyse(wr, now).level === 'ko' || top9(now).level === 'ko') && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+}
+document.addEventListener('change', e => {
+  const b = e.target.closest('[data-a="friday"]');
+  if (!b || !setup) return;
+  setup.friday = parseISO(b.value); render();
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (!b) return;
+  const a = b.dataset.a, v = b.dataset.v, id = b.dataset.id, now = Date.now();
+  if (a === 'team') {
+    if (v === 'maint') { S.team = 'maint'; setup = null; save(); render(); }
+    else { setup = { step: 2, friday: anchorFriday(now) }; render(); }
+  } else if (a === 'type') {
+    S.team = 'expl'; S.expl = { anchor: iso(addDays(setup.friday, 3)), type: v }; setup = null; save(); render();
+  } else if (a === 'setup') { setup = { step: 1 }; render();
+  } else if (a === 'cancel') { setup = null; render();
+  } else if (a === 'dep') {
+    const open = S.sorties.find(x => x.ret == null);
+    if (open) {
+      if (!confirm('Un départ est déjà en cours depuis ' + fDT(open.dep) + '.\nLe remplacer par maintenant (' + fT(now) + ') ?')) return;
+      open.dep = now;
+    } else S.sorties.push({ id: uid(), dep: now, ret: null });
+    apresEnregistrement('Départ enregistré à ' + fT(now));
+  } else if (a === 'ret') {
+    const open = S.sorties.find(x => x.ret == null);
+    if (open) { open.ret = now; apresEnregistrement('Retour enregistré à ' + fT(now)); }
+    else openForm(null, { ret: now, msg: 'Aucun départ en cours : indiquer l’heure de départ.' });
+  } else if (a === 'add') { openForm(null, {});
+  } else if (a === 'edit') { openForm(id);
+  } else if (a === 'close') { modal.hidden = true;
+  } else if (a === 'note') {
+    if (document.getElementById('f-hide').checked) { S.hideNote = true; save(); }
+    modal.hidden = true;
+  } else if (a === 'save') {
+    const dep = new Date(document.getElementById('f-dep').value).getTime();
+    const rv = document.getElementById('f-ret').value, ret = rv ? new Date(rv).getTime() : null;
+    const err = document.getElementById('f-err');
+    if (isNaN(dep)) { err.textContent = 'L’heure de départ est à renseigner.'; return; }
+    if (ret != null && (isNaN(ret) || ret <= dep)) { err.textContent = 'Le retour doit être après le départ.'; return; }
+    const autre = S.sorties.find(x => x.ret == null && x.id !== id);
+    if (ret == null && autre) { err.textContent = 'Une autre sortie est déjà en cours.'; return; }
+    if (id) { const x = S.sorties.find(s => s.id === id); x.dep = dep; x.ret = ret; }
+    else S.sorties.push({ id: uid(), dep: dep, ret: ret });
+    modal.hidden = true; save(); render();
+  } else if (a === 'del') {
+    if (!confirm('Supprimer cette sortie ?')) return;
+    S.sorties = S.sorties.filter(x => x.id !== id); modal.hidden = true; save(); render();
+  } else if (a === 'clear') {
+    if (confirm('Effacer toutes les sorties enregistrées ?')) { S.sorties = []; save(); render(); }
+  } else if (a === 'win') { winOff += Number(b.dataset.d); render();
+  } else if (a === 'day') {
+    const fl = (S.weeks[b.dataset.w] || DEFAUT_SEMAINE).slice(), i = Number(b.dataset.i);
+    fl[i] = fl[i] ? 0 : 1; S.weeks[b.dataset.w] = fl; save(); render();
+  }
+});
+
+render();
+setInterval(() => { if (!setup) render(); }, 30000);
+if (!S.hideNote || memOnly) openNote();
+</script>
+</body>
+</html>
